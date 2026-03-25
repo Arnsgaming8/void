@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Void | Immersive Experience</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;400&display=swap');
@@ -19,7 +21,10 @@
             overflow: hidden;
             background: #000;
             font-family: 'Outfit', sans-serif;
-            cursor: none;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         #canvas-container {
@@ -60,6 +65,13 @@
             transform: translate(-50%, -50%);
         }
         
+        /* Hide cursor on touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .cursor, .cursor-dot {
+                display: none;
+            }
+        }
+        
         .intro {
             position: fixed;
             top: 0;
@@ -87,6 +99,8 @@
             letter-spacing: 0.5em;
             text-transform: uppercase;
             animation: pulse 2s ease-in-out infinite;
+            text-align: center;
+            padding: 0 20px;
         }
         
         @keyframes pulse {
@@ -148,6 +162,26 @@
         .mode-indicator.visible {
             opacity: 1;
         }
+        
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .ui {
+                bottom: 20px;
+                left: 20px;
+                font-size: 0.55rem;
+            }
+            
+            .mode-indicator {
+                top: 20px;
+                right: 20px;
+                font-size: 0.6rem;
+            }
+            
+            .click-prompt {
+                bottom: 40px;
+                font-size: 0.7rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -160,7 +194,7 @@
         <div class="intro-text">Enter the Void</div>
     </div>
     
-    <div class="click-prompt">Click to begin</div>
+    <div class="click-prompt">Tap to begin</div>
     
     <div class="ui">
         <div id="mode">AUDIO REACTIVE</div>
@@ -185,12 +219,17 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
         
+        // Detect mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                         (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+        
         // Cursor
         const cursor = document.querySelector('.cursor');
         const cursorDot = document.querySelector('.cursor-dot');
         let mouseX = 0, mouseY = 0;
         let targetX = 0, targetY = 0;
         
+        // Mouse move
         document.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
             mouseY = e.clientY;
@@ -208,6 +247,21 @@
             cursorDot.style.opacity = '0';
         });
         
+        // Touch move - update position for particle interaction
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                mouseX = e.touches[0].clientX;
+                mouseY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                mouseX = e.touches[0].clientX;
+                mouseY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        
         // Scene
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -215,28 +269,32 @@
         camera.position.z = 80;
         
         const renderer = new THREE.WebGLRenderer({ 
-            antialias: true, 
+            antialias: !isMobile, 
             alpha: true,
             powerPreference: "high-performance"
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
         renderer.setClearColor(0x000000, 1);
         container.appendChild(renderer.domElement);
         
-        // Post-processing
+        // Post-processing - reduced for mobile
         const composer = new EffectComposer(renderer);
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
         
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            2.0, 0.5, 0.1
+            isMobile ? 1.5 : 2.0,
+            0.5,
+            0.1
         );
         composer.addPass(bloomPass);
         
-        const filmPass = new FilmPass(0.35, 0.025, 648, false);
-        composer.addPass(filmPass);
+        if (!isMobile) {
+            const filmPass = new FilmPass(0.35, 0.025, 648, false);
+            composer.addPass(filmPass);
+        }
         
         // Audio setup
         let audioContext, analyser, dataArray;
@@ -269,8 +327,8 @@
             return sum / dataArray.length / 255;
         }
         
-        // Particle systems
-        const PARTICLE_COUNT = 25000;
+        // Particle count - reduced for mobile
+        const PARTICLE_COUNT = isMobile ? 8000 : 25000;
         
         // Main nebula particles
         const nebulaGeometry = new THREE.BufferGeometry();
@@ -363,13 +421,13 @@
         const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
         scene.add(nebula);
         
-        // Ring system
-        const ringCount = 5;
+        // Ring system - reduced for mobile
+        const ringCount = isMobile ? 3 : 5;
         const rings = [];
         
         for (let r = 0; r < ringCount; r++) {
             const ringGeometry = new THREE.BufferGeometry();
-            const ringParticleCount = 500;
+            const ringParticleCount = isMobile ? 200 : 500;
             const ringPositions = new Float32Array(ringParticleCount * 3);
             const ringColors = new Float32Array(ringParticleCount * 3);
             const ringSizes = new Float32Array(ringParticleCount);
@@ -441,8 +499,8 @@
             scene.add(ring);
         }
         
-        // Central sphere
-        const sphereGeometry = new THREE.SphereGeometry(8, 64, 64);
+        // Central sphere - reduced segments for mobile
+        const sphereGeometry = new THREE.SphereGeometry(8, isMobile ? 32 : 64, isMobile ? 32 : 64);
         const sphereMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
@@ -497,19 +555,32 @@
             raycaster.ray.intersectPlane(plane, mouse3D);
         });
         
-        // Click to start
+        // Touch move for 3D interaction
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                const x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+                const y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+                raycaster.ray.intersectPlane(plane, mouse3D);
+            }
+        }, { passive: true });
+        
+        // Click/tap to start
         let started = false;
         let time = 0;
         
-        document.addEventListener('click', async () => {
+        function startExperience() {
             if (!started) {
                 started = true;
                 document.querySelector('.intro').classList.add('hidden');
                 document.querySelector('.click-prompt').classList.add('hidden');
                 document.querySelector('.ui').classList.add('visible');
-                await initAudio();
+                initAudio();
             }
-        });
+        }
+        
+        document.addEventListener('click', startExperience);
+        document.addEventListener('touchstart', startExperience, { passive: true });
         
         // Animation
         let lastTime = performance.now();
@@ -522,7 +593,7 @@
             frameCount++;
             
             if (currentTime - lastTime >= 1000) {
-                document.getElementById('stats').textContent = `Particles: ${(PARTICLE_COUNT + ringCount * 500).toLocaleString()}`;
+                document.getElementById('stats').textContent = `Particles: ${(PARTICLE_COUNT + ringCount * (isMobile ? 200 : 500)).toLocaleString()}`;
                 frameCount = 0;
                 lastTime = currentTime;
             }
@@ -552,7 +623,7 @@
             for (let i = 0; i < PARTICLE_COUNT; i++) {
                 const i3 = i * 3;
                 
-                // Mouse interaction
+                // Mouse/touch interaction
                 const dx = posArray[i3] - mouse3D.x;
                 const dy = posArray[i3 + 1] - mouse3D.y;
                 const dz = posArray[i3 + 2] - mouse3D.z;
@@ -608,22 +679,35 @@
             camera.position.y = Math.cos(time * 0.3) * 10;
             camera.lookAt(0, 0, 0);
             
-            // Cursor animation
-            targetX += (mouseX - targetX) * 0.1;
-            targetY += (mouseY - targetY) * 0.1;
-            cursor.style.left = targetX + 'px';
-            cursor.style.top = targetY + 'px';
+            // Cursor animation (only on non-touch devices)
+            if (!isMobile) {
+                targetX += (mouseX - targetX) * 0.1;
+                targetY += (mouseY - targetY) * 0.1;
+                cursor.style.left = targetX + 'px';
+                cursor.style.top = targetY + 'px';
+            }
             
             composer.render();
         }
         
-        // Resize
-        window.addEventListener('resize', () => {
+        // Resize handler
+        function onResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
             nebulaMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+            
+            rings.forEach(ring => {
+                ring.material.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+            });
+        }
+        
+        window.addEventListener('resize', onResize);
+        
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(onResize, 100);
         });
         
         animate();
