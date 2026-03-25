@@ -1,4 +1,4 @@
-# Nebula 🌌
+# Void 🌌
 
 An interactive 3D particle system experience built with Three.js and WebGL.
 
