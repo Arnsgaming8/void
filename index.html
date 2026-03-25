@@ -329,13 +329,20 @@
         function getAudioLevel() {
             if (!audioInitialized || !analyser) return 0;
             analyser.getByteFrequencyData(dataArray);
+            
+            // Debug: log first 10 values to see if we're getting data
+            // console.log('Frequency data:', Array.from(dataArray.slice(0, 10)));
+            
             let sum = 0;
             // Focus on lower frequencies for more visible reaction
             const focusRange = Math.floor(dataArray.length * 0.5);
             for (let i = 0; i < focusRange; i++) {
                 sum += dataArray[i];
             }
-            return (sum / focusRange / 255) * 2.0; // Boost the level for immediate response
+            const level = (sum / focusRange / 255) * 2.0;
+            // Debug
+            // console.log('Audio level:', level.toFixed(3));
+            return level;
         }
         
         // Particle count - reduced for mobile
