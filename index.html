@@ -309,7 +309,7 @@
                 const source = audioContext.createMediaStreamSource(stream);
                 analyser = audioContext.createAnalyser();
                 analyser.fftSize = 256;
-                analyser.smoothingTimeConstant = 0.8;
+                analyser.smoothingTimeConstant = 0.3;
                 source.connect(analyser);
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
                 
@@ -335,7 +335,7 @@
             for (let i = 0; i < focusRange; i++) {
                 sum += dataArray[i];
             }
-            return (sum / focusRange / 255) * 1.5; // Boost the level
+            return (sum / focusRange / 255) * 2.0; // Boost the level for immediate response
         }
         
         // Particle count - reduced for mobile
