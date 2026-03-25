@@ -588,6 +588,7 @@
         let time = 0;
         
         function startExperience() {
+            console.log('Starting experience, started:', started);
             if (!started) {
                 started = true;
                 document.querySelector('.intro').classList.add('hidden');
@@ -599,6 +600,10 @@
         
         document.addEventListener('click', startExperience);
         document.addEventListener('touchstart', startExperience, { passive: true });
+        
+        // Debug: check if events are being caught
+        document.body.addEventListener('click', () => console.log('Body click detected'));
+        document.body.addEventListener('touchstart', () => console.log('Body touch detected'), { passive: true });
         
         // Animation
         let lastTime = performance.now();
