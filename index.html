@@ -305,32 +305,37 @@
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Resume AudioContext on mobile (required for iOS)
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                analyser.smoothingTimeConstant = 0.8;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                // Resume context after getting permission
                 if (audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
                 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const source = audioContext.createMediaStreamSource(stream);
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 256;
-                source.connect(analyser);
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
                 audioInitialized = true;
                 document.getElementById('mode-indicator').classList.add('visible');
+                console.log('Audio initialized, state:', audioContext.state);
             } catch (e) {
                 console.log('Audio not available, using visual mode', e);
             }
         }
         
         function getAudioLevel() {
-            if (!audioInitialized) return 0;
+            if (!audioInitialized || !analyser) return 0;
             analyser.getByteFrequencyData(dataArray);
             let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
+            // Focus on lower frequencies for more visible reaction
+            const focusRange = Math.floor(dataArray.length * 0.5);
+            for (let i = 0; i < focusRange; i++) {
                 sum += dataArray[i];
             }
-            return sum / dataArray.length / 255;
+            return (sum / focusRange / 255) * 1.5; // Boost the level
         }
         
         // Particle count - reduced for mobile
