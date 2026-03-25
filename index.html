@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula | Interactive Experience</title>
+    <title>Void | Immersive Experience</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;400&display=swap');
         
         * {
             margin: 0;
@@ -13,10 +13,13 @@
             box-sizing: border-box;
         }
         
-        body {
+        html, body {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background: #000;
-            font-family: 'Syne', sans-serif;
+            font-family: 'Outfit', sans-serif;
+            cursor: none;
         }
         
         #canvas-container {
@@ -27,99 +30,144 @@
             height: 100%;
         }
         
-        .overlay {
+        .cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease, width 0.3s ease, height 0.3s ease;
+            mix-blend-mode: difference;
+        }
+        
+        .cursor.hover {
+            width: 60px;
+            height: 60px;
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1001;
+            transform: translate(-50%, -50%);
+        }
+        
+        .intro {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            background: #000;
+            transition: opacity 1.5s ease, visibility 1.5s;
         }
         
-        .title {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        .intro.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        .intro-text {
             color: rgba(255, 255, 255, 0.9);
-            font-size: clamp(2rem, 8vw, 6rem);
-            font-weight: 700;
-            letter-spacing: 0.3em;
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            font-weight: 200;
+            letter-spacing: 0.5em;
             text-transform: uppercase;
-            pointer-events: none;
-            z-index: 20;
-            mix-blend-mode: overlay;
-            animation: breathe 4s ease-in-out infinite;
+            animation: pulse 2s ease-in-out infinite;
         }
         
-        @keyframes breathe {
-            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.02); }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
         }
         
-        .hint {
+        .click-prompt {
             position: fixed;
-            bottom: 40px;
+            bottom: 50px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.9rem;
-            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
             text-transform: uppercase;
-            pointer-events: none;
-            z-index: 20;
-            animation: fadeInOut 3s ease-in-out infinite;
+            z-index: 101;
+            animation: fadeInOut 2s ease-in-out infinite;
         }
         
         @keyframes fadeInOut {
             0%, 100% { opacity: 0.2; }
-            50% { opacity: 0.6; }
+            50% { opacity: 0.7; }
         }
         
-        .corner {
-            position: fixed;
-            width: 80px;
-            height: 80px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: none;
-            z-index: 20;
+        .click-prompt.hidden {
+            display: none;
         }
         
-        .corner.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
-        .corner.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
-        .corner.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
-        .corner.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
-        
-        .stats {
+        .ui {
             position: fixed;
-            top: 30px;
+            bottom: 30px;
             left: 30px;
             color: rgba(255, 255, 255, 0.3);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             letter-spacing: 0.15em;
-            z-index: 20;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .ui.visible {
+            opacity: 1;
+        }
+        
+        .mode-indicator {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .mode-indicator.visible {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
     
-    <div class="overlay"></div>
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
     
-    <div class="title">Nebula</div>
-    
-    <div class="hint">Move your cursor</div>
-    
-    <div class="corner tl"></div>
-    <div class="corner tr"></div>
-    <div class="corner bl"></div>
-    <div class="corner br"></div>
-    
-    <div class="stats">
-        <div id="particle-count">Particles: 0</div>
-        <div id="fps">FPS: 0</div>
+    <div class="intro">
+        <div class="intro-text">Enter the Void</div>
     </div>
+    
+    <div class="click-prompt">Click to begin</div>
+    
+    <div class="ui">
+        <div id="mode">AUDIO REACTIVE</div>
+        <div id="stats">Particles: 0</div>
+    </div>
+    
+    <div class="mode-indicator" id="mode-indicator">🎵 Listening</div>
 
     <script type="importmap">
     {
@@ -135,12 +183,36 @@
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
         
-        // Scene setup
+        // Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorDot = document.querySelector('.cursor-dot');
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = mouseX + 'px';
+            cursorDot.style.top = mouseY + 'px';
+        });
+        
+        document.addEventListener('mouseenter', () => {
+            cursor.style.opacity = '1';
+            cursorDot.style.opacity = '1';
+        });
+        
+        document.addEventListener('mouseleave', () => {
+            cursor.style.opacity = '0';
+            cursorDot.style.opacity = '0';
+        });
+        
+        // Scene
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 50;
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 80;
         
         const renderer = new THREE.WebGLRenderer({ 
             antialias: true, 
@@ -159,92 +231,127 @@
         
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.5,  // strength
-            0.4,  // radius
-            0.85  // threshold
+            2.0, 0.5, 0.1
         );
         composer.addPass(bloomPass);
         
-        // Particle system
-        const PARTICLE_COUNT = 15000;
-        const particles = new THREE.BufferGeometry();
-        const positions = new Float32Array(PARTICLE_COUNT * 3);
-        const velocities = new Float32Array(PARTICLE_COUNT * 3);
-        const colors = new Float32Array(PARTICLE_COUNT * 3);
-        const sizes = new Float32Array(PARTICLE_COUNT);
+        const filmPass = new FilmPass(0.35, 0.025, 648, false);
+        composer.addPass(filmPass);
         
-        // Color palette - cosmic colors
-        const colorPalette = [
-            new THREE.Color(0x6366f1),  // Indigo
-            new THREE.Color(0x8b5cf6),  // Violet
-            new THREE.Color(0xd946ef),  // Fuchsia
-            new THREE.Color(0x06b6d4),  // Cyan
-            new THREE.Color(0x22d3ee),  // Sky
-            new THREE.Color(0xa855f7),  // Purple
+        // Audio setup
+        let audioContext, analyser, dataArray;
+        let audioInitialized = false;
+        let audioLevel = 0;
+        
+        async function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                audioInitialized = true;
+                document.getElementById('mode-indicator').classList.add('visible');
+            } catch (e) {
+                console.log('Audio not available, using visual mode');
+            }
+        }
+        
+        function getAudioLevel() {
+            if (!audioInitialized) return 0;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            return sum / dataArray.length / 255;
+        }
+        
+        // Particle systems
+        const PARTICLE_COUNT = 25000;
+        
+        // Main nebula particles
+        const nebulaGeometry = new THREE.BufferGeometry();
+        const nebulaPositions = new Float32Array(PARTICLE_COUNT * 3);
+        const nebulaVelocities = new Float32Array(PARTICLE_COUNT * 3);
+        const nebulaColors = new Float32Array(PARTICLE_COUNT * 3);
+        const nebulaSizes = new Float32Array(PARTICLE_COUNT);
+        const nebulaPhases = new Float32Array(PARTICLE_COUNT);
+        
+        const colors = [
+            new THREE.Color(0x00ffff),
+            new THREE.Color(0xff00ff),
+            new THREE.Color(0x00ff88),
+            new THREE.Color(0xff3366),
+            new THREE.Color(0x6633ff),
+            new THREE.Color(0xffff00),
         ];
         
-        // Initialize particles
         for (let i = 0; i < PARTICLE_COUNT; i++) {
             const i3 = i * 3;
-            
-            // Spherical distribution
-            const radius = 30 + Math.random() * 20;
+            const radius = 20 + Math.random() * 40;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             
-            positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
-            positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-            positions[i3 + 2] = radius * Math.cos(phi);
+            nebulaPositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            nebulaPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            nebulaPositions[i3 + 2] = radius * Math.cos(phi);
             
-            // Random velocities
-            velocities[i3] = (Math.random() - 0.5) * 0.02;
-            velocities[i3 + 1] = (Math.random() - 0.5) * 0.02;
-            velocities[i3 + 2] = (Math.random() - 0.5) * 0.02;
+            nebulaVelocities[i3] = (Math.random() - 0.5) * 0.05;
+            nebulaVelocities[i3 + 1] = (Math.random() - 0.5) * 0.05;
+            nebulaVelocities[i3 + 2] = (Math.random() - 0.5) * 0.05;
             
-            // Random colors from palette
-            const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-            colors[i3] = color.r;
-            colors[i3 + 1] = color.g;
-            colors[i3 + 2] = color.b;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            nebulaColors[i3] = color.r;
+            nebulaColors[i3 + 1] = color.g;
+            nebulaColors[i3 + 2] = color.b;
             
-            // Random sizes
-            sizes[i] = Math.random() * 2 + 0.5;
+            nebulaSizes[i] = Math.random() * 3 + 0.5;
+            nebulaPhases[i] = Math.random() * Math.PI * 2;
         }
         
-        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        nebulaGeometry.setAttribute('position', new THREE.BufferAttribute(nebulaPositions, 3));
+        nebulaGeometry.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
+        nebulaGeometry.setAttribute('size', new THREE.BufferAttribute(nebulaSizes, 1));
         
-        // Custom shader material
-        const particleMaterial = new THREE.ShaderMaterial({
+        const nebulaMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+                uAudio: { value: 0 },
                 uPixelRatio: { value: renderer.getPixelRatio() }
             },
             vertexShader: `
                 attribute float size;
                 varying vec3 vColor;
+                varying float vSize;
                 uniform float uTime;
+                uniform float uAudio;
                 uniform float uPixelRatio;
                 
                 void main() {
                     vColor = color;
+                    vSize = size * (1.0 + uAudio * 2.0);
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    gl_PointSize = size * uPixelRatio * (50.0 / -mvPosition.z);
+                    gl_PointSize = vSize * uPixelRatio * (60.0 / -mvPosition.z);
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
             fragmentShader: `
                 varying vec3 vColor;
+                varying float vSize;
+                uniform float uAudio;
                 
                 void main() {
                     float dist = length(gl_PointCoord - vec2(0.5));
                     if (dist > 0.5) discard;
                     
                     float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-                    vec3 glow = vColor * (1.0 + alpha * 0.5);
+                    float glow = exp(-dist * 3.0) * (1.0 + uAudio);
+                    vec3 finalColor = vColor * (1.0 + uAudio * 0.5);
                     
-                    gl_FragColor = vec4(glow, alpha * 0.8);
+                    gl_FragColor = vec4(finalColor, alpha * 0.7 + glow * 0.3);
                 }
             `,
             transparent: true,
@@ -253,43 +360,160 @@
             depthWrite: false
         });
         
-        const particleSystem = new THREE.Points(particles, particleMaterial);
-        scene.add(particleSystem);
+        const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
+        scene.add(nebula);
         
-        // Mouse interaction
-        const mouse = new THREE.Vector3(0, 0, 0);
-        const raycaster = new THREE.Raycaster();
-        const mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        // Ring system
+        const ringCount = 5;
+        const rings = [];
         
-        document.addEventListener('mousemove', (event) => {
-            const x = (event.clientX / window.innerWidth) * 2 - 1;
-            const y = -(event.clientY / window.innerHeight) * 2 + 1;
+        for (let r = 0; r < ringCount; r++) {
+            const ringGeometry = new THREE.BufferGeometry();
+            const ringParticleCount = 500;
+            const ringPositions = new Float32Array(ringParticleCount * 3);
+            const ringColors = new Float32Array(ringParticleCount * 3);
+            const ringSizes = new Float32Array(ringParticleCount);
             
-            raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-            const intersection = new THREE.Vector3();
-            raycaster.ray.intersectPlane(mousePlane, intersection);
+            const ringRadius = 50 + r * 15;
             
-            mouse.copy(intersection);
+            for (let i = 0; i < ringParticleCount; i++) {
+                const i3 = i * 3;
+                const angle = (i / ringParticleCount) * Math.PI * 2;
+                const spread = (Math.random() - 0.5) * 5;
+                
+                ringPositions[i3] = Math.cos(angle) * (ringRadius + spread);
+                ringPositions[i3 + 1] = Math.sin(angle) * (ringRadius + spread);
+                ringPositions[i3 + 2] = (Math.random() - 0.5) * 2;
+                
+                const color = colors[r % colors.length];
+                ringColors[i3] = color.r;
+                ringColors[i3 + 1] = color.g;
+                ringColors[i3 + 2] = color.b;
+                
+                ringSizes[i] = Math.random() * 2 + 1;
+            }
+            
+            ringGeometry.setAttribute('position', new THREE.BufferAttribute(ringPositions, 3));
+            ringGeometry.setAttribute('color', new THREE.BufferAttribute(ringColors, 3));
+            ringGeometry.setAttribute('size', new THREE.BufferAttribute(ringSizes, 1));
+            
+            const ringMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uAudio: { value: 0 },
+                    uPixelRatio: { value: renderer.getPixelRatio() }
+                },
+                vertexShader: `
+                    attribute float size;
+                    varying vec3 vColor;
+                    uniform float uTime;
+                    uniform float uAudio;
+                    uniform float uPixelRatio;
+                    
+                    void main() {
+                        vColor = color;
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = size * uPixelRatio * (40.0 / -mvPosition.z) * (1.0 + uAudio);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    uniform float uAudio;
+                    
+                    void main() {
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                        gl_FragColor = vec4(vColor * (1.0 + uAudio * 0.5), alpha * 0.8);
+                    }
+                `,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            
+            const ring = new THREE.Points(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.random() * Math.PI;
+            ring.rotation.y = Math.random() * Math.PI;
+            rings.push(ring);
+            scene.add(ring);
+        }
+        
+        // Central sphere
+        const sphereGeometry = new THREE.SphereGeometry(8, 64, 64);
+        const sphereMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uAudio: { value: 0 }
+            },
+            vertexShader: `
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                uniform float uTime;
+                
+                void main() {
+                    vNormal = normal;
+                    vPosition = position;
+                    vec3 pos = position;
+                    pos += normal * sin(position.x * 3.0 + uTime) * 0.5;
+                    pos += normal * cos(position.y * 3.0 + uTime) * 0.5;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                uniform float uTime;
+                uniform float uAudio;
+                
+                void main() {
+                    vec3 color1 = vec3(0.0, 1.0, 1.0);
+                    vec3 color2 = vec3(1.0, 0.0, 1.0);
+                    float mixVal = sin(vPosition.x * 2.0 + vPosition.y * 2.0 + uTime) * 0.5 + 0.5;
+                    vec3 color = mix(color1, color2, mixVal);
+                    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+                    gl_FragColor = vec4(color * (1.0 + uAudio), 0.3 + fresnel * 0.5);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
         });
         
-        // Touch support
-        document.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const x = (touch.clientX / window.innerWidth) * 2 - 1;
-            const y = -(touch.clientY / window.innerHeight) * 2 + 1;
-            
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+        
+        // Mouse 3D position
+        const mouse3D = new THREE.Vector3(0, 0, 0);
+        const raycaster = new THREE.Raycaster();
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 2 - 1;
+            const y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-            const intersection = new THREE.Vector3();
-            raycaster.ray.intersectPlane(mousePlane, intersection);
-            
-            mouse.copy(intersection);
+            raycaster.ray.intersectPlane(plane, mouse3D);
+        });
+        
+        // Click to start
+        let started = false;
+        let time = 0;
+        
+        document.addEventListener('click', async () => {
+            if (!started) {
+                started = true;
+                document.querySelector('.intro').classList.add('hidden');
+                document.querySelector('.click-prompt').classList.add('hidden');
+                document.querySelector('.ui').classList.add('visible');
+                await initAudio();
+            }
         });
         
         // Animation
-        let time = 0;
         let lastTime = performance.now();
         let frameCount = 0;
-        let fps = 0;
         
         function animate() {
             requestAnimationFrame(animate);
@@ -298,46 +522,54 @@
             frameCount++;
             
             if (currentTime - lastTime >= 1000) {
-                fps = frameCount;
+                document.getElementById('stats').textContent = `Particles: ${(PARTICLE_COUNT + ringCount * 500).toLocaleString()}`;
                 frameCount = 0;
                 lastTime = currentTime;
-                document.getElementById('fps').textContent = `FPS: ${fps}`;
             }
             
-            time += 0.001;
-            particleMaterial.uniforms.uTime.value = time;
+            time += 0.005;
             
-            // Update particles
-            const posArray = particles.attributes.position.array;
-            const velArray = velocities;
+            // Get audio level
+            audioLevel = getAudioLevel();
+            
+            // Update uniforms
+            nebulaMaterial.uniforms.uTime.value = time;
+            nebulaMaterial.uniforms.uAudio.value = audioLevel;
+            sphereMaterial.uniforms.uTime.value = time;
+            sphereMaterial.uniforms.uAudio.value = audioLevel;
+            
+            rings.forEach((ring, idx) => {
+                ring.material.uniforms.uTime.value = time;
+                ring.material.uniforms.uAudio.value = audioLevel;
+                ring.rotation.z += 0.002 * (idx % 2 === 0 ? 1 : -1);
+                ring.rotation.x += 0.001;
+            });
+            
+            // Update nebula particles
+            const posArray = nebulaGeometry.attributes.position.array;
+            const velArray = nebulaVelocities;
             
             for (let i = 0; i < PARTICLE_COUNT; i++) {
                 const i3 = i * 3;
                 
-                // Mouse repulsion
-                const dx = posArray[i3] - mouse.x;
-                const dy = posArray[i3 + 1] - mouse.y;
-                const dz = posArray[i3 + 2] - mouse.z;
+                // Mouse interaction
+                const dx = posArray[i3] - mouse3D.x;
+                const dy = posArray[i3 + 1] - mouse3D.y;
+                const dz = posArray[i3 + 2] - mouse3D.z;
                 const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 
-                if (dist < 15) {
-                    const force = (15 - dist) / 15;
-                    const repulsion = force * 0.5;
-                    velArray[i3] += (dx / dist) * repulsion;
-                    velArray[i3 + 1] += (dy / dist) * repulsion;
-                    velArray[i3 + 2] += (dz / dist) * repulsion;
+                if (dist < 20) {
+                    const force = (20 - dist) / 20;
+                    velArray[i3] += (dx / dist) * force * 0.8;
+                    velArray[i3 + 1] += (dy / dist) * force * 0.8;
+                    velArray[i3 + 2] += (dz / dist) * force * 0.8;
                 }
                 
-                // Orbital motion
-                const angle = time * 0.1;
-                const cosA = Math.cos(angle);
-                const sinA = Math.sin(angle);
-                
-                const x = posArray[i3];
-                const y = posArray[i3 + 1];
-                
-                posArray[i3] = x * cosA - y * sinA;
-                posArray[i3 + 1] = x * sinA + y * cosA;
+                // Audio reactivity - expand outward
+                const expand = audioLevel * 0.1;
+                posArray[i3] *= (1 + expand * 0.01);
+                posArray[i3 + 1] *= (1 + expand * 0.01);
+                posArray[i3 + 2] *= (1 + expand * 0.01);
                 
                 // Apply velocity
                 posArray[i3] += velArray[i3];
@@ -345,65 +577,56 @@
                 posArray[i3 + 2] += velArray[i3 + 2];
                 
                 // Damping
-                velArray[i3] *= 0.99;
-                velArray[i3 + 1] *= 0.99;
-                velArray[i3 + 2] *= 0.99;
+                velArray[i3] *= 0.98;
+                velArray[i3 + 1] *= 0.98;
+                velArray[i3 + 2] *= 0.98;
                 
-                // Return to original position slowly
-                const origRadius = 30 + Math.random() * 20;
+                // Return to sphere
                 const currentRadius = Math.sqrt(
                     posArray[i3] * posArray[i3] + 
-                    posArray[i3 + 1] * posArray[i3 + 1]
+                    posArray[i3 + 1] * posArray[i3 + 1] +
+                    posArray[i3 + 2] * posArray[i3 + 2]
                 );
+                const targetRadius = 30 + Math.sin(nebulaPhases[i] + time) * 10;
                 
-                if (currentRadius > origRadius + 5) {
-                    posArray[i3] *= 0.995;
-                    posArray[i3 + 1] *= 0.995;
-                    posArray[i3 + 2] *= 0.995;
+                if (currentRadius > targetRadius + 10) {
+                    const pull = 0.995;
+                    posArray[i3] *= pull;
+                    posArray[i3 + 1] *= pull;
+                    posArray[i3 + 2] *= pull;
                 }
             }
             
-            particles.attributes.position.needsUpdate = true;
+            nebulaGeometry.attributes.position.needsUpdate = true;
             
             // Rotate entire system
-            particleSystem.rotation.y += 0.0005;
-            particleSystem.rotation.x += 0.0002;
+            nebula.rotation.y += 0.001;
+            nebula.rotation.x += 0.0005;
             
-            // Camera subtle movement
-            camera.position.x = Math.sin(time * 0.3) * 5;
-            camera.position.y = Math.cos(time * 0.2) * 5;
-            camera.lookAt(scene.position);
+            // Camera movement
+            camera.position.x = Math.sin(time * 0.5) * 10;
+            camera.position.y = Math.cos(time * 0.3) * 10;
+            camera.lookAt(0, 0, 0);
+            
+            // Cursor animation
+            targetX += (mouseX - targetX) * 0.1;
+            targetY += (mouseY - targetY) * 0.1;
+            cursor.style.left = targetX + 'px';
+            cursor.style.top = targetY + 'px';
             
             composer.render();
         }
         
-        // Handle resize
+        // Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
-            particleMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+            nebulaMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
         });
         
-        // Update particle count display
-        document.getElementById('particle-count').textContent = `Particles: ${PARTICLE_COUNT.toLocaleString()}`;
-        
-        // Start animation
         animate();
-        
-        // Hide hint after first interaction
-        let hintHidden = false;
-        const hideHint = () => {
-            if (!hintHidden) {
-                hintHidden = true;
-                document.querySelector('.hint').style.transition = 'opacity 1s';
-                document.querySelector('.hint').style.opacity = '0';
-            }
-        };
-        
-        document.addEventListener('mousemove', hideHint, { once: true });
-        document.addEventListener('touchmove', hideHint, { once: true });
     </script>
 </body>
 </html>
